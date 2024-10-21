@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from signup.views import signup,send_otp,verify_otp
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('testapi.urls')),  
-
+    path('signup/', signup, name='signup'),
+    path('send_otp/', send_otp, name='send_otp'),
+    path('verify_otp/', verify_otp, name='verify_otp'),
 ]
