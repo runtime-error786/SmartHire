@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-from .models import User, Profile  # Import the Profile model
+from .models import User, Profile, Candidate  # Import the Profile and Candidate model
 
 # In-memory storage for OTPs (consider using a database or cache for production)
 otp_storage = {}
@@ -59,18 +59,24 @@ def signup(request):
     city = request.data.get('city', None)
     country = request.data.get('country', None)
     phone_number = request.data.get('phone_number', None)
+
+    # Candidate fields
     skills = request.data.get('skills', None)
-    experience = request.data.get('experience', None)
     education = request.data.get('education', None)
+    github_link = request.data.get('github_link', None)
+    resume = request.FILES.get('resume', None)  # Resume file upload
+    score = request.data.get('score', None)  # Assume score is passed
 
     if User.objects.filter(email=email).exists():
         return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Create User
     user = User(email=email)
     user.set_password(password)  # Ensure password is hashed
-    user.role = 'user'  # Set default role
+    user.role = 'user'  # Set default role (for Candidate)
     user.save()
 
+    # Create Profile
     profile = Profile(
         user=user,
         first_name=first_name,
@@ -78,11 +84,19 @@ def signup(request):
         city=city,
         country=country,
         phone_number=phone_number,
-        skills=skills,
-        experience=experience,
-        education=education,
         profile_picture=profile_picture,
     )
     profile.save()
 
-    return Response({'message': 'User created successfully.'}, status=status.HTTP_201_CREATED)
+    # Create Candidate (linking the candidate to the profile)
+    candidate = Candidate(
+        profile=profile,  # Use profile instead of user
+        skills=skills,
+        education=education,
+        github_link=github_link,
+        resume=resume,
+        score=score if score is not None else 0.0  # Provide a default score if none is passed
+    )
+    candidate.save()
+
+    return Response({'message': 'Signup successfully.'}, status=status.HTTP_201_CREATED)

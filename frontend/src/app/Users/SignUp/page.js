@@ -98,7 +98,7 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post("http://localhost:3001/send_otp/", { email });
+            const response = await axios.post("http://localhost:8000/send_otp/", { email });
             toast.success(response.data.message);
             setIsOtpSent(true);
         } catch (error) {
@@ -112,7 +112,7 @@ const Signup = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post("http://localhost:3001/verify_otp/", { email, otp });
+            const response = await axios.post("http://localhost:8000/verify_otp/", { email, otp });
             toast.success(response.data.message);
             handleSignup();
         } catch (error) {
@@ -144,7 +144,7 @@ const Signup = () => {
     
         setLoading(true);
         try {
-            const response = await axios.post("http://localhost:3001/signup/", formData, {
+            const response = await axios.post("http://localhost:8000/signup/", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 onUploadProgress: (progressEvent) => {
                     const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -157,10 +157,10 @@ const Signup = () => {
             setLastName("");
             setEmail("");
             setPassword("");
-            setOtp("");
+          //setOtp("");
             setProfilePicture(null);
-            setPreviewSrc("");
-            setIsOtpSent(false); 
+            //setPreviewSrc("");
+            //setIsOtpSent(false); 
         } catch (error) {
             toast.error("Signup failed! Please try again.");
         } finally {

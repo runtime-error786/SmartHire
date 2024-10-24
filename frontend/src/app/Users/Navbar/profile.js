@@ -80,7 +80,7 @@ const ProfileLink = ({ router }) => {
             <hr className="my-1 border-gray-700" />
             <button
               className="w-full px-4 py-2 text-gray-300 hover:bg-red-600 hover:text-white flex items-center space-x-2 transition duration-200"
-              onClick={() => router.push("/logout")}
+              onClick={() => router.push("/Users/SignUp")}
             >
               <FontAwesomeIcon icon={faSignOutAlt} />
               <span>Logout</span>
