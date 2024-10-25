@@ -5,9 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-from .models import User, Profile  # Import the Profile model
+from .models import User, Profile 
 
-# In-memory storage for OTPs (consider using a database or cache for production)
 otp_storage = {}
 
 def generate_otp(length=6):
@@ -18,12 +17,11 @@ def generate_otp(length=6):
 def send_otp(request):
     email = request.data.get('email')
     
-    # Check if the user exists
     if User.objects.filter(email=email).exists():
         return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
     otp = generate_otp()
-    otp_storage[email] = otp  # Store OTP in memory
+    otp_storage[email] = otp  
 
     send_mail(
         'Your OTP Code',
@@ -40,9 +38,8 @@ def verify_otp(request):
     email = request.data.get('email')
     otp = request.data.get('otp')
 
-    # Verify the OTP
     if otp_storage.get(email) == otp:
-        del otp_storage[email]  # Clear OTP after verification
+        del otp_storage[email] 
         return Response({'message': 'OTP verified successfully.'})
     else:
         return Response({'message': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -67,8 +64,8 @@ def signup(request):
         return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
     user = User(email=email)
-    user.set_password(password)  # Ensure password is hashed
-    user.role = 'user'  # Set default role
+    user.set_password(password) 
+    user.role = 'user' 
     user.save()
 
     profile = Profile(

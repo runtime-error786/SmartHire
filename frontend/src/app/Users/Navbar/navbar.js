@@ -32,13 +32,13 @@ const Navbar = () => {
     router.push("/Users/SignIn");
   };
 
-  const switchToRecruiter = () => {
-    dispatch(Role_Action('Recruiter'));
+  const switchToRecruiter = async() => {
+    await dispatch(Role_Action('Recruiter'));
     router.push('/Users/Home');
   };
 
-  const switchToCandidate = () => {
-    dispatch(Role_Action('Candidate'));
+  const switchToCandidate = async() => {
+    await dispatch(Role_Action('Candidate'));
     router.push('/Users/Home');
   };
 

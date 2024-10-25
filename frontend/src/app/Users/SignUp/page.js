@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast, { Toaster } from 'react-hot-toast';
+import 'react-toastify/dist/ReactToastify.css';
 import "../../globals.css";
 import bgImage from "../../Photos/bg.png";
 
@@ -78,16 +78,56 @@ const Signup = () => {
     const passwordRegex = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
 
     const validateForm = () => {
+        // Check if all fields are filled
         if (!firstName || !lastName || !email || !password || !profilePicture) {
             toast.error("All fields are required.");
             return false;
         }
-        if (!passwordRegex.test(password)) {
-            toast.error("Password must be at least 8 characters long and contain a special character.");
+    
+        // First name and last name validation
+        const nameRegex = /^[A-Za-z]+$/;
+        if (!nameRegex.test(firstName) || firstName.length < 2 || firstName.length > 30) {
+            toast.error("First name must contain only letters and be 2-30 characters long.");
             return false;
         }
+    
+        if (!nameRegex.test(lastName) || lastName.length < 2 || lastName.length > 30) {
+            toast.error("Last name must contain only letters and be 2-30 characters long.");
+            return false;
+        }
+    
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            toast.error("Please enter a valid email address.");
+            return false;
+        }
+    
+        // Password validation
+        const passwordRegex = /^(?=.*[!@#$%^&*])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,}$/;
+        if (!passwordRegex.test(password)) {
+            toast.error("Password must be at least 8 characters long, contain one uppercase letter, one digit, and one special character.");
+            return false;
+        }
+    
+        // Profile picture validation
+        if (profilePicture) {
+            const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validImageTypes.includes(profilePicture.type)) {
+                toast.error("Profile picture must be a JPG, PNG, or GIF.");
+                return false;
+            }
+    
+            const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+            if (profilePicture.size > maxSizeInBytes) {
+                toast.error("Profile picture must be less than 2MB.");
+                return false;
+            }
+        }
+    
         return true;
     };
+    
 
     const handleSendOtp = async (e) => {
         e.preventDefault();
@@ -266,7 +306,7 @@ const Signup = () => {
                     </form>
                 )}
             </div>
-            <ToastContainer />
+            <Toaster />
         </div>
     );
 };

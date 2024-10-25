@@ -43,10 +43,12 @@ INSTALLED_APPS = [
     'signin',
     'signup',
     'corsheaders',
-
+    'getUserData',
+    'signout'
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -54,8 +56,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
 
 ]
 
@@ -136,8 +136,6 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -145,3 +143,29 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER =  "sheesikram3@gmail.com"
 EMAIL_HOST_PASSWORD = "mbzv lnpy bswu bdzo"
+
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # Increase to 1 hour or as needed
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh token valid for 7 days
+}
+
+CORS_ALLOW_CREDENTIALS = True  # Enable credentials
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # Specify allowed origin explicitly
+]
+
+# Remove CORS_ALLOW_ALL_ORIGINS to avoid conflicts with CORS_ALLOW_CREDENTIALS
+CORS_ALLOW_ALL_ORIGINS = False  # Remove or set to False if present
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+# Optional: Ensure cookies behave correctly during development
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
+SESSION_COOKIE_HTTPONLY = True
