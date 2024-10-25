@@ -33,7 +33,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/profile/1/`);
+        const response = await axios.get(`http://127.0.0.1:3001/profile/1/`);
         const data = response.data;
 
         // Populate form data based on the role
@@ -55,7 +55,7 @@ const Profile = () => {
           profilePicture: data.profile.profile_picture || null,
         });
 
-        setProfilePicturePreview(`http://localhost:8000${data.profile.profile_picture}`); // Set the profile picture preview
+        setProfilePicturePreview(`http://127.0.0.1:3001${data.profile.profile_picture}`); // Set the profile picture preview
 
         setLoading(false);
       } catch (error) {
@@ -108,7 +108,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:8000/profile/1/`, formDataToSubmit, {
+      const response = await axios.put(`http://127.0.0.1:3001/profile/1/`, formDataToSubmit, {
         headers: { 'Content-Type': 'multipart/form-data' }, // Set headers for file upload
       });
       console.log('Profile updated:', response.data);

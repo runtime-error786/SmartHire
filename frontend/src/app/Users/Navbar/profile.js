@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import "../../globals.css";
 import { Role_Action } from "@/Redux/Action";
+import Image from "next/image"; // Importing the Image component from Next.js
 
 const DEFAULT_IMAGE = "https://media.istockphoto.com/id/1300845620/vector/user-icon-flat-isolated-on-white-background-user-symbol-vector-illustration.jpg?s=612x612&w=0&k=20&c=yBeyba0hUkh14_jgv1OKqIH0CCSWU_4ckRkAoy2p73o="; 
 
@@ -61,10 +62,11 @@ const ProfileLink = () => {
         aria-label="Profile Menu"
       >
         <div className="relative w-10 h-10 md:w-12 md:h-12 lg:w-12 lg:h-12">
-          <img
+          <Image
             src={userData?.user_data?.profile_picture || DEFAULT_IMAGE} 
             alt="Profile"
-            className="absolute inset-0 w-full h-full rounded-full border-2 border-gray-300 object-cover"
+            layout="fill" // Use 'fill' to cover the div, similar to object-fit: cover
+            className="rounded-full border-2 border-gray-300 object-cover"
           />
         </div>
       </button>
