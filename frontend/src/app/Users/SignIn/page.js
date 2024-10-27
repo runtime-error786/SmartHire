@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import toast, { Toaster } from 'react-hot-toast';
 import "../../globals.css";
 import bgImage from "../../Photos/bg.png";
 import { GoogleLogin } from '@react-oauth/google';
@@ -23,6 +22,8 @@ const SignIn = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [otpError, setOtpError] = useState('');
+    const [newPasswordError, setNewPasswordError] = useState('');
     const [loading, setLoading] = useState(false);
     const [timer, setTimer] = useState(0);
     const dispatch = useDispatch();
@@ -35,12 +36,10 @@ const SignIn = () => {
         try {
             const { credential } = credentialResponse;
             const response = await axios.post('http://127.0.0.1:3001/decode-jwt/', { token: credential }, { withCredentials: true });
-
-            toast.success('Login successful!');
             await dispatch(Role_Action("Candidate"));
             router.push("/Users/Home");
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Google Login failed.');
+            setEmailError(error.response?.data?.error || 'Google Login failed.');
         }
     };
 
@@ -59,13 +58,12 @@ const SignIn = () => {
         }
 
         if (!email || !password) {
-            toast.error("Please enter both email and password.");
+            setPasswordError("Please enter both email and password.");
             return;
         }
 
         try {
             const response = await axios.post('http://127.0.0.1:3001/login/', { email, password }, { withCredentials: true });
-            toast.success('Login successful!');
             await dispatch(Role_Action("Candidate"));
             resetForm();
             router.push("/Users/Home");
@@ -89,24 +87,20 @@ const SignIn = () => {
             await axios.post('http://127.0.0.1:3001/send-otp_signin/', { email });
             setIsOtpSent(true);
             setTimer(60); // Start countdown
-            toast.success('OTP sent to your email!');
-
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Error sending OTP.');
+            setEmailError(error.response?.data?.error || 'Error sending OTP.');
         } finally {
             setLoading(false);
         }
     };
 
-    // Resend OTP function
     const handleResendOtp = async () => {
         setLoading(true);
         try {
             await axios.post('http://127.0.0.1:3001/send-otp_signin/', { email });
             setTimer(60); // Restart countdown
-            toast.success("OTP has been resent to your email!");
         } catch (error) {
-            toast.error(error.response?.data?.error || "Error resending OTP.");
+            setEmailError(error.response?.data?.error || "Error resending OTP.");
         } finally {
             setLoading(false);
         }
@@ -121,53 +115,44 @@ const SignIn = () => {
 
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
-    
+
         if (otp.includes('')) {
-            toast.error("Please enter the complete OTP.");
+            setOtpError("Please enter the complete OTP.");
             return;
         }
-    
+
         try {
-            // Make sure this request is a POST
             await axios.post('http://127.0.0.1:3001/verify_otp_signin/', { email, otp: otp.join('') });
             setOtpVerified(true);
-            toast.success('OTP verified! Please reset your password.');
+            setOtpError('');
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Invalid OTP.');
+            setOtpError(error.response?.data?.error || 'Invalid OTP.');
         }
     };
-    
+
     const handleResetPassword = async (e) => {
         e.preventDefault();
-    
+
         const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-zA-Z]).{8,}$/;
-    
-        // Check if newPassword meets the complexity requirements
+
         if (!newPassword) {
-            toast.error("Please enter a new password.");
+            setNewPasswordError("Please enter a new password.");
             return;
         }
-    
-        if (newPassword.length < 8) {
-            toast.error("Password must be at least 8 characters long.");
-            return;
-        }
-    
+
         if (!passwordRegex.test(newPassword)) {
-            toast.error("Password must contain at least one uppercase letter, one special character, and be at least 8 characters long.");
+            setNewPasswordError("Password must contain at least one uppercase letter, one special character, and be at least 8 characters long.");
             return;
         }
-    
+
         try {
             await axios.post('http://127.0.0.1:3001/reset_password/', { email, newPassword });
-            toast.success('Password reset successfully!');
             router.push("/Users/SignIn");
             resetForm();
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Error resetting password.');
+            setNewPasswordError(error.response?.data?.error || 'Error resetting password.');
         }
     };
-    
 
     const resetForm = () => {
         setShowForgotPassword(false);
@@ -178,6 +163,8 @@ const SignIn = () => {
         setOtpVerified(false);
         setEmailError('');
         setPasswordError('');
+        setOtpError('');
+        setNewPasswordError('');
     };
 
     return (
@@ -233,7 +220,7 @@ const SignIn = () => {
                         <div className="flex items-center justify-center mt-6">
                             <GoogleLogin
                                 onSuccess={handleGoogleLogin}
-                                onError={() => toast.error('Google Login Failed')}
+                                onError={() => setEmailError('Google Login Failed')}
                                 shape="pill"
                                 buttonText="Sign In with Google"
                             />
@@ -262,6 +249,7 @@ const SignIn = () => {
                             isOtpSent ? (
                                 <form onSubmit={handleVerifyOtp}>
                                     <OtpInput otp={otp} setOtp={setOtp} />
+                                    {otpError && <p className="text-red-500 text-sm mt-1 text-center">{otpError}</p>}
                                     <button
                                         type="submit"
                                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
@@ -316,6 +304,7 @@ const SignIn = () => {
                                         aria-label="New Password"
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
                                     />
+                                    {newPasswordError && <p className="text-red-500 text-sm mt-1">{newPasswordError}</p>}
                                 </div>
                                 <button
                                     type="submit"
@@ -328,7 +317,6 @@ const SignIn = () => {
                     </>
                 )}
             </div>
-            <Toaster position="top-center" />
         </div>
     );
 };
