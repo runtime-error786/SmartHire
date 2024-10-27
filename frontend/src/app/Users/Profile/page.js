@@ -1,65 +1,67 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import Image from "next/image";
 
 const Profile = () => {
-  const role = useSelector((state) => state.Role_Reducer); // Access the current role from Redux state
+  const role = useSelector((state) => state.Role_Reducer);
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    contactNo: '',
-    location: '',
-    country: '',
-    bio: '',
-    linkedIn: '',
-    github: '',
-    portfolio: '',
-    skills: '',
-    education: '',
-    companyName: '', // Recruiter-specific field
-    website: '', // Recruiter-specific field
-    profilePicture: null, // For loading the profile picture from backend
+    firstName: "",
+    lastName: "",
+    email: "",
+    contactNo: "",
+    location: "",
+    country: "",
+    skills: "",
+    education: "",
+    linkedIn: "",
+    github: "",
+    bio: "",
+    companyName: "",
+    website: "",
+    profilePicture: null,
+    role: role,
   });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(''); // For showing success message after update
-  const [profilePicturePreview, setProfilePicturePreview] = useState(''); // Preview of profile picture
+  const [successMessage, setSuccessMessage] = useState("");
+  const [profilePicturePreview, setProfilePicturePreview] = useState("");
+  const [errors, setErrors] = useState({});
 
   // Fetch profile data on component load
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:3001/profile/1/`);
+        const response = await axios.get(`http://127.0.0.1:3001/profile/`, { withCredentials: true });
         const data = response.data;
 
-        // Populate form data based on the role
         setFormData({
-          firstName: data.profile.first_name || '',
-          lastName: data.profile.last_name || '',
-          email: data.user.email || '',
-          contactNo: data.profile.phone_number || '',
-          location: data.profile.city || '',
-          country: data.profile.country || '',
-          bio: data.profile.experience || '',
-          linkedIn: data.profile.linkedin_link || '',
-          github: data.candidate?.github_link || '',
-          portfolio: '', // Assuming this comes from some other source
-          skills: data.candidate?.skills || '',
-          education: data.candidate?.education || '',
-          companyName: data.recruiter?.company_name || '',
-          website: data.recruiter?.company_website || '',
+          firstName: data.profile.first_name || "",
+          lastName: data.profile.last_name || "",
+          email: data.email || "",
+          contactNo: data.profile.phone_number || "",
+          location: data.profile.city || "",
+          country: data.profile.country || "",
+          skills: data.candidate ? data.candidate.skills : "",
+          education: data.candidate ? data.candidate.education : "",
+          linkedIn: data.profile.linkedin_link || "",
+          github: data.candidate ? data.candidate.github_link : "",
+          bio: data.candidate ? data.candidate.experience : "",
+          companyName: data.recruiter ? data.recruiter.company_name : "",
+          website: data.recruiter ? data.recruiter.company_website : "",
           profilePicture: data.profile.profile_picture || null,
         });
 
-        setProfilePicturePreview(`http://127.0.0.1:3001${data.profile.profile_picture}`); // Set the profile picture preview
+        if (data.profile.profile_picture) {
+          setProfilePicturePreview(data.profile.profile_picture);
+        }
 
         setLoading(false);
       } catch (error) {
-        setError('Error loading profile data.');
+        setError("Error loading profile data.");
         setLoading(false);
       }
     };
@@ -67,11 +69,42 @@ const Profile = () => {
     fetchProfileData();
   }, []);
 
+  const validateField = (name, value) => {
+    const errors = {};
+    switch (name) {
+      case "firstName":
+      case "lastName":
+        if (!/^[A-Za-z]+$/.test(value)) errors[name] = "Only alphabetic characters allowed.";
+        break;
+      case "contactNo":
+        if (!/^\d{11}$/.test(value)) errors[name] = "Phone number must be 11 digits.";
+        break;
+      case "linkedIn":
+      case "github":
+      case "website":
+        if (value && !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)) errors[name] = "Invalid URL format.";
+        break;
+      case "companyName":
+        if (value && !/^[A-Za-z\s]+$/.test(value)) errors[name] = "Only alphabetic characters allowed.";
+        break;
+      case "country":
+        if (!/^[A-Za-z\s]+$/.test(value)) errors[name] = "Only alphabetic characters allowed.";
+        break;
+      default:
+        break;
+    }
+    return errors;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value,
+    });
+    setErrors({
+      ...errors,
+      ...validateField(name, value),
     });
   };
 
@@ -81,41 +114,52 @@ const Profile = () => {
       ...formData,
       profilePicture: file,
     });
-    setProfilePicturePreview(URL.createObjectURL(file)); // Preview the new profile picture
+    setProfilePicturePreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const formDataToSubmit = new FormData(); // Use FormData to handle file uploads
-    formDataToSubmit.append('user[email]', formData.email);
-    formDataToSubmit.append('profile[first_name]', formData.firstName);
-    formDataToSubmit.append('profile[last_name]', formData.lastName);
-    formDataToSubmit.append('profile[phone_number]', formData.contactNo);
-    formDataToSubmit.append('profile[experience]', formData.bio);
-    formDataToSubmit.append('profile[city]', formData.location);
-    formDataToSubmit.append('profile[country]', formData.country);
-    formDataToSubmit.append('profile[linkedin_link]', formData.linkedIn);
-    formDataToSubmit.append('profile_picture', formData.profilePicture); // Add the profile picture file
 
-    if (role === 'Candidate') {
-      formDataToSubmit.append('candidate[github_link]', formData.github);
-      formDataToSubmit.append('candidate[skills]', formData.skills);
-      formDataToSubmit.append('candidate[education]', formData.education);
-    } else if (role === 'Recruiter') {
-      formDataToSubmit.append('recruiter[company_name]', formData.companyName);
-      formDataToSubmit.append('recruiter[company_website]', formData.website);
+    // Validate all fields before submitting
+    const newErrors = {};
+    for (const field in formData) {
+      const fieldErrors = validateField(field, formData[field]);
+      if (Object.keys(fieldErrors).length > 0) {
+        newErrors[field] = fieldErrors[field];
+      }
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
+    const formDataToSubmit = new FormData();
+    formDataToSubmit.append("role", role);
+    formDataToSubmit.append("first_name", formData.firstName);
+    formDataToSubmit.append("last_name", formData.lastName);
+    formDataToSubmit.append("phone_number", formData.contactNo);
+    formDataToSubmit.append("city", formData.location);
+    formDataToSubmit.append("country", formData.country);
+    formDataToSubmit.append("linkedin_link", formData.linkedIn);
+    if (formData.github) formDataToSubmit.append("github_link", formData.github);
+    if (formData.bio) formDataToSubmit.append("bio", formData.bio);
+    if (formData.profilePicture) formDataToSubmit.append("profile_picture", formData.profilePicture);
+
+    if (role === "Candidate") {
+      formDataToSubmit.append("skills", formData.skills);
+      formDataToSubmit.append("education", formData.education);
+    } else if (role === "Recruiter") {
+      formDataToSubmit.append("company_name", formData.companyName);
+      formDataToSubmit.append("company_website", formData.website);
     }
 
     try {
-      const response = await axios.put(`http://127.0.0.1:3001/profile/1/`, formDataToSubmit, {
-        headers: { 'Content-Type': 'multipart/form-data' }, // Set headers for file upload
+      await axios.put(`http://127.0.0.1:3001/update_profile/`, formDataToSubmit, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
       });
-      console.log('Profile updated:', response.data);
-      setSuccessMessage('Profile updated successfully!'); // Set success message
+      setSuccessMessage("Profile updated successfully!");
     } catch (error) {
-      console.error('Error updating profile:', error);
-      setError('Error updating profile.');
+      console.error("Error updating profile:", error);
+      setError("Error updating profile.");
     }
   };
 
@@ -123,16 +167,17 @@ const Profile = () => {
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="min-h-screen flex justify-center items-center mt-16" style={{ backgroundColor: '#F4F2EE' }}>
+    <div className="min-h-screen flex justify-center items-center mt-10" style={{ backgroundColor: "#F4F2EE" }}>
       <div className="bg-white p-8 rounded-lg shadow-sm max-w-4xl w-full mx-5 md:mx-10 lg:mx-20 border border-gray-200">
         <div className="text-center mb-8">
-          {/* Display profile picture with option to upload a new one */}
           {profilePicturePreview && (
             <label htmlFor="profilePictureUpload" className="block">
-              <img
-                className="w-24 h-24 rounded-full mx-auto shadow-sm border-2 border-gray-300 cursor-pointer"
+              <Image
                 src={profilePicturePreview}
                 alt="Profile"
+                width={96}
+                height={96}
+                className="rounded-full border-2 border-gray-300 object-cover mx-auto"
               />
               <input
                 type="file"
@@ -152,217 +197,59 @@ const Profile = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* First Name */}
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">
-                First Name
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
+            {[
+              { name: "firstName", label: "First Name", placeholder: "", type: "text" },
+              { name: "lastName", label: "Last Name", placeholder: "", type: "text" },
+              { name: "email", label: "Email", placeholder: "", type: "email", readOnly: true },
+              { name: "contactNo", label: "Contact No", placeholder: "", type: "text" },
+              { name: "location", label: "Location", placeholder: "Enter your city", type: "text" },
+              { name: "country", label: "Country", placeholder: "Enter your country", type: "text" },
+              { name: "linkedIn", label: "LinkedIn Profile", placeholder: "Enter LinkedIn URL", type: "url" },
+              { name: "github", label: "GitHub Profile", placeholder: "Enter GitHub URL", type: "url", show: role === "Candidate" },
+              { name: "skills", label: "Skills", placeholder: "Enter your skills", type: "text", show: role === "Candidate" },
+              { name: "education", label: "Education", placeholder: "", type: "textarea", show: role === "Candidate" },
+              { name: "companyName", label: "Company Name", placeholder: "", type: "text", show: role === "Recruiter" },
+              { name: "website", label: "Company Website", placeholder: "", type: "url", show: role === "Recruiter" },
+            ].map(({ name, label, placeholder, type, readOnly, show = true }) => (
+              show && (
+                <div key={name}>
+                  <label className="block text-gray-700 text-sm mb-1">{label}</label>
+                  {type !== "textarea" ? (
+                    <input
+                      type={type}
+                      name={name}
+                      value={formData[name]}
+                      onChange={handleChange}
+                      placeholder={placeholder}
+                      readOnly={readOnly}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md ${readOnly ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    />
+                  ) : (
+                    <textarea
+                      name={name}
+                      value={formData[name]}
+                      onChange={handleChange}
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  )}
+                  {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
+                </div>
+              )
+            ))}
+
+            {/* Bio */}
+            <div className="md:col-span-2">
+              <label className="block text-gray-700 text-sm mb-1">Bio</label>
+              <textarea
+                name="bio"
+                value={formData.bio}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                placeholder="Enter your first name"
-                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                rows="4"
+                placeholder="Tell us something about yourself"
               />
             </div>
-
-            {/* Last Name */}
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                placeholder="Enter your last name"
-                required
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200 bg-gray-100 cursor-not-allowed"
-                placeholder="Enter your email"
-                readOnly
-              />
-            </div>
-
-            {/* Contact No */}
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">
-                Contact No
-              </label>
-              <input
-                type="text"
-                name="contactNo"
-                value={formData.contactNo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                placeholder="Enter your contact number"
-                required
-              />
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">
-                Location
-              </label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                placeholder="Enter your city"
-                required
-              />
-            </div>
-
-            {/* Country */}
-            <div>
-              <label className="block text-gray-700 text-sm mb-1">
-                Country
-              </label>
-              <input
-                type="text"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                placeholder="Enter your country"
-                required
-              />
-            </div>
-
-            {/* Conditionally render fields based on role */}
-            {role === 'Candidate' && (
-              <>
-                {/* Bio */}
-                <div className="md:col-span-2">
-                  <label className="block text-gray-700 text-sm mb-1">
-                    Bio
-                  </label>
-                  <textarea
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Tell us something about yourself"
-                    rows="4"
-                  />
-                </div>
-
-                {/* LinkedIn Profile */}
-                <div>
-                  <label className="block text-gray-700 text-sm mb-1">
-                    LinkedIn Profile URL
-                  </label>
-                  <input
-                    type="url"
-                    name="linkedIn"
-                    value={formData.linkedIn}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Enter your LinkedIn profile URL"
-                  />
-                </div>
-
-                {/* GitHub Profile */}
-                <div>
-                  <label className="block text-gray-700 text-sm mb-1">
-                    GitHub Profile URL
-                  </label>
-                  <input
-                    type="url"
-                    name="github"
-                    value={formData.github}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Enter your GitHub profile URL"
-                  />
-                </div>
-
-                {/* Skills */}
-                <div>
-                  <label className="block text-gray-700 text-sm mb-1">
-                    Skills
-                  </label>
-                  <input
-                    type="text"
-                    name="skills"
-                    value={formData.skills}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Enter your skills"
-                  />
-                </div>
-
-                {/* Education */}
-                <div className="md:col-span-2">
-                  <label className="block text-gray-700 text-sm mb-1">
-                    Education
-                  </label>
-                  <textarea
-                    name="education"
-                    value={formData.education}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Enter your education details"
-                    rows="3"
-                  />
-                </div>
-              </>
-            )}
-
-            {role === 'Recruiter' && (
-              <>
-                {/* Company Name */}
-                <div>
-                  <label className="block text-gray-700 text-sm mb-1">
-                    Company Name
-                  </label>
-                  <input
-                    type="text"
-                    name="companyName"
-                    value={formData.companyName}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Enter your company name"
-                    required
-                  />
-                </div>
-
-                {/* Company Website */}
-                <div>
-                  <label className="block text-gray-700 text-sm mb-1">
-                    Company Website
-                  </label>
-                  <input
-                    type="url"
-                    name="website"
-                    value={formData.website}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all duration-200"
-                    placeholder="Enter your company website"
-                    required
-                  />
-                </div>
-              </>
-            )}
           </div>
 
           <div className="text-center mt-8">
