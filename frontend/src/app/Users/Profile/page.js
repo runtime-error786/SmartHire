@@ -31,7 +31,6 @@ const Profile = () => {
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
   const [errors, setErrors] = useState({});
 
-  // Fetch profile data on component load
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
@@ -70,30 +69,31 @@ const Profile = () => {
   }, []);
 
   const validateField = (name, value) => {
-    const errors = {};
+    const fieldErrors = {};
     switch (name) {
       case "firstName":
       case "lastName":
-        if (!/^[A-Za-z]+$/.test(value)) errors[name] = "Only alphabetic characters allowed.";
+        if (!value) fieldErrors[name] = "This field is required.";
+        else if (!/^[A-Za-z]+$/.test(value)) fieldErrors[name] = "Only alphabetic characters allowed.";
         break;
       case "contactNo":
-        if (!/^\d{11}$/.test(value)) errors[name] = "Phone number must be 11 digits.";
+        if (value && !/^\d{11}$/.test(value)) fieldErrors[name] = "Phone number must be 11 digits.";
         break;
       case "linkedIn":
       case "github":
       case "website":
-        if (value && !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)) errors[name] = "Invalid URL format.";
+        if (value && !/^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)) fieldErrors[name] = "Invalid URL format.";
         break;
       case "companyName":
-        if (value && !/^[A-Za-z\s]+$/.test(value)) errors[name] = "Only alphabetic characters allowed.";
+        if (value && !/^[A-Za-z\s]+$/.test(value)) fieldErrors[name] = "Only alphabetic characters allowed.";
         break;
       case "country":
-        if (!/^[A-Za-z\s]+$/.test(value)) errors[name] = "Only alphabetic characters allowed.";
+        if (value && !/^[A-Za-z\s]+$/.test(value)) fieldErrors[name] = "Only alphabetic characters allowed.";
         break;
       default:
         break;
     }
-    return errors;
+    return fieldErrors;
   };
 
   const handleChange = (e) => {
@@ -120,14 +120,14 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate all fields before submitting
     const newErrors = {};
-    for (const field in formData) {
+    ["firstName", "lastName"].forEach(field => {
       const fieldErrors = validateField(field, formData[field]);
       if (Object.keys(fieldErrors).length > 0) {
         newErrors[field] = fieldErrors[field];
       }
-    }
+    });
+
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
@@ -238,7 +238,6 @@ const Profile = () => {
               )
             ))}
 
-            {/* Bio */}
             <div className="md:col-span-2">
               <label className="block text-gray-700 text-sm mb-1">Bio</label>
               <textarea

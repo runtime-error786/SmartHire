@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
-import 'react-toastify/dist/ReactToastify.css';
 import "../../globals.css";
 import bgImage from "../../Photos/bg.png";
 import { GoogleLogin } from '@react-oauth/google';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { Role_Action } from "@/Redux/Action";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
@@ -19,98 +20,154 @@ const SignIn = () => {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [otpVerified, setOtpVerified] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [timer, setTimer] = useState(0);
     const dispatch = useDispatch();
     const userRole = useSelector((state) => state.Role_Reducer);
     const router = useRouter();
 
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
     const handleGoogleLogin = async (credentialResponse) => {
         try {
             const { credential } = credentialResponse;
-
-            const response = await axios.post(
-                'http://127.0.0.1:3001/decode-jwt/',
-                { token: credential },
-                { withCredentials: true }
-            );
+            const response = await axios.post('http://127.0.0.1:3001/decode-jwt/', { token: credential }, { withCredentials: true });
 
             toast.success('Login successful!');
-            console.log('Decoded Data:', response.data.data);
             await dispatch(Role_Action("Candidate"));
-            console.log(userRole);
             router.push("/Users/Home");
         } catch (error) {
             toast.error(error.response?.data?.error || 'Google Login failed.');
         }
     };
 
+    const handleSignupRedirect = () => {
+        router.push('/Users/SignUp');
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
+
+        if (!validateEmail(email)) {
+            setEmailError("Invalid email format.");
+            return;
+        } else {
+            setEmailError('');
+        }
+
+        if (!email || !password) {
+            toast.error("Please enter both email and password.");
+            return;
+        }
+
         try {
-            const response = await axios.post(
-                'http://127.0.0.1:3001/login/',
-                { email, password },
-                { withCredentials: true }
-            );
+            const response = await axios.post('http://127.0.0.1:3001/login/', { email, password }, { withCredentials: true });
             toast.success('Login successful!');
             await dispatch(Role_Action("Candidate"));
+            resetForm();
             router.push("/Users/Home");
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Login failed.');
+            setPasswordError("Invalid email or password.");
         }
     };
 
     const handleForgotPassword = async (e) => {
         e.preventDefault();
-        try {
-            const response = await axios.post('http://127.0.0.1:3001/send-otp_signin/', { email });
-            setIsOtpSent(true);
-            toast.success('OTP sent to your email!');
-        } catch (error) {
-            const errorMessage = error.response?.data?.error;
 
-            if (errorMessage === 'Email does not exist') {
-                toast.error('Email does not exist. Please check your email or sign up.');
-                resetForm();
-            } else {
-                toast.error(errorMessage || 'Error sending OTP.');
-            }
+        if (!validateEmail(email)) {
+            setEmailError("Invalid email format.");
+            return;
+        } else {
+            setEmailError('');
+        }
+
+        setLoading(true);
+        try {
+            await axios.post('http://127.0.0.1:3001/send-otp_signin/', { email });
+            setIsOtpSent(true);
+            setTimer(60); // Start countdown
+            toast.success('OTP sent to your email!');
+
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Error sending OTP.');
+        } finally {
+            setLoading(false);
         }
     };
 
+    // Resend OTP function
+    const handleResendOtp = async () => {
+        setLoading(true);
+        try {
+            await axios.post('http://127.0.0.1:3001/send-otp_signin/', { email });
+            setTimer(60); // Restart countdown
+            toast.success("OTP has been resent to your email!");
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Error resending OTP.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (timer > 0) {
+            const countdown = setInterval(() => setTimer((prev) => prev - 1), 1000);
+            return () => clearInterval(countdown);
+        }
+    }, [timer]);
 
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
-        const otpCode = otp.join('');
-        try {
-            const response = await axios.post('http://127.0.0.1:3001/verify-otp_signin/', { email, otp: otpCode });
-            if (response.data.success) {
-                setOtpVerified(true);
-                toast.success('OTP verified. Enter your new password.');
-            } else {
-                toast.error('Invalid OTP.');
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.error || 'Error verifying OTP.');
-        }
-    };
-
-    const handleResetPassword = async (e) => {
-        e.preventDefault();
-        const specialCharRegex = /^(?=.*[!@#$%^&*])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,}$/;
-
-        if (newPassword.length < 7 || !specialCharRegex.test(newPassword)) {
-            toast.error("Password must be at least 8 characters long, contain one uppercase letter, one digit, and one special character.");
+    
+        if (otp.includes('')) {
+            toast.error("Please enter the complete OTP.");
             return;
         }
-
+    
         try {
-            await axios.post('http://127.0.0.1:3001/forgot-password/', { email, newPassword });
-            toast.success('Password reset successful. Please sign in.');
+            // Make sure this request is a POST
+            await axios.post('http://127.0.0.1:3001/verify_otp_signin/', { email, otp: otp.join('') });
+            setOtpVerified(true);
+            toast.success('OTP verified! Please reset your password.');
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Invalid OTP.');
+        }
+    };
+    
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+    
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-zA-Z]).{8,}$/;
+    
+        // Check if newPassword meets the complexity requirements
+        if (!newPassword) {
+            toast.error("Please enter a new password.");
+            return;
+        }
+    
+        if (newPassword.length < 8) {
+            toast.error("Password must be at least 8 characters long.");
+            return;
+        }
+    
+        if (!passwordRegex.test(newPassword)) {
+            toast.error("Password must contain at least one uppercase letter, one special character, and be at least 8 characters long.");
+            return;
+        }
+    
+        try {
+            await axios.post('http://127.0.0.1:3001/reset_password/', { email, newPassword });
+            toast.success('Password reset successfully!');
+            router.push("/Users/SignIn");
             resetForm();
         } catch (error) {
             toast.error(error.response?.data?.error || 'Error resetting password.');
         }
     };
+    
 
     const resetForm = () => {
         setShowForgotPassword(false);
@@ -119,21 +176,20 @@ const SignIn = () => {
         setOtp(Array(6).fill(''));
         setIsOtpSent(false);
         setOtpVerified(false);
+        setEmailError('');
+        setPasswordError('');
     };
 
-    const handleSignupRedirect = () => {
-        router.push('/Users/SignUp');
-      };
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-blue-100 px-4 sm:px-6 lg:px-8 mt-10 py-10">
-            <div className="bg-white rounded-lg shadow-2xl p-8 sm:p-10 max-w-md w-full transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-blue-200">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-20">
+            <div className="bg-[#FFFFFF] rounded-lg shadow-2xl p-8 sm:p-10 max-w-md w-full">
                 <div className="text-center mb-6">
                     <img src={bgImage.src} alt="Brand Logo" className="w-16 sm:w-20 mx-auto mb-4" />
                     <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
-                        {showForgotPassword ? (isOtpSent ? "Enter OTP" : "Reset Password") : "Welcome Back!"}
+                        {showForgotPassword ? (isOtpSent ? (otpVerified ? "Reset Password" : "Enter OTP") : "Reset Password") : "Welcome Back!"}
                     </h1>
                     <p className="mt-2 text-gray-600 text-sm sm:text-base">
-                        {showForgotPassword ? (isOtpSent ? "Enter the OTP sent to your email." : "Please enter your email to receive an OTP.") : "Please sign in to your account."}
+                        {showForgotPassword ? (isOtpSent ? (otpVerified ? "Enter your new password." : "Enter the OTP sent to your email.") : "Please enter your email to receive an OTP.") : "Please sign in to your account."}
                     </p>
                 </div>
 
@@ -149,10 +205,11 @@ const SignIn = () => {
                                 aria-label="Email"
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
                             />
+                            {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
                         </div>
-                        <div className="mb-4">
+                        <div className="mb-4 relative">
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 placeholder="Password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -160,10 +217,16 @@ const SignIn = () => {
                                 aria-label="Password"
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
                             />
+                            <FontAwesomeIcon
+                                icon={showPassword ? faEyeSlash : faEye}
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-3 cursor-pointer text-gray-500"
+                            />
+                            {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                            className="w-full bg-[#0073b1] text-white py-3 rounded-lg hover:bg-[#005582] focus:outline-none shadow-lg"
                         >
                             Login
                         </button>
@@ -183,78 +246,86 @@ const SignIn = () => {
                                 Forgot Password?
                             </a>
                         </p>
-                        <div className="px-4 py-2 text-sm text-gray-400 text-center">
-                            <span>Don't have an account?</span>
+                        <div className="px-4 py-2 text-sm text-center">
+                            <span className="text-gray-600">Don't have an account?</span>
                             <button
-                                className="text-blue-400 hover:underline"
+                                className="text-[#0073b1] font-bold hover:underline ml-1"
                                 onClick={handleSignupRedirect}
                             >
                                 Sign Up
                             </button>
                         </div>
                     </form>
-                ) : isOtpSent && otpVerified ? (
-                    <form onSubmit={handleResetPassword}>
-                        <div className="mb-4">
-                            <input
-                                type="password"
-                                placeholder="New Password"
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                required
-                                aria-label="New Password"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
-                        >
-                            Reset Password
-                        </button>
-                    </form>
-                ) : isOtpSent ? (
-                    <>
-                        <form onSubmit={handleVerifyOtp}>
-                            <div className="mb-4 flex justify-between">
-                                <OtpInput otp={otp} setOtp={setOtp} />
-                            </div>
-                            <button
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
-                            >
-                                Verify OTP
-                            </button>
-                            <p className="mt-4 text-center text-gray-600 text-sm">
-                                <a
-                                    onClick={() => resetForm()}
-                                    className="text-blue-600 hover:underline cursor-pointer"
-                                >
-                                    Resend OTP
-                                </a>
-                            </p>
-                        </form>
-                    </>
                 ) : (
-                    <form onSubmit={handleForgotPassword}>
-                        <div className="mb-4">
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                                aria-label="Email"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
-                        >
-                            Send OTP
-                        </button>
-                    </form>
+                    <>
+                        {!otpVerified ? (
+                            isOtpSent ? (
+                                <form onSubmit={handleVerifyOtp}>
+                                    <OtpInput otp={otp} setOtp={setOtp} />
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                                    >
+                                        Verify OTP
+                                    </button>
+                                    {timer === 0 ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleResendOtp}
+                                            className="w-full bg-gray-200 text-blue-600 py-3 mt-2 rounded-lg focus:outline-none shadow-lg"
+                                        >
+                                            Resend OTP
+                                        </button>
+                                    ) : (
+                                        <p className="mt-4 text-center text-gray-600 text-sm">
+                                            Resend OTP in {timer}s
+                                        </p>
+                                    )}
+                                </form>
+                            ) : (
+                                <form onSubmit={handleForgotPassword}>
+                                    <div className="mb-4">
+                                        <input
+                                            type="email"
+                                            placeholder="Email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                            aria-label="Email"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                                        />
+                                        {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                                    >
+                                        {loading ? "Processing..." : "Send OTP"}
+                                    </button>
+                                </form>
+                            )
+                        ) : (
+                            <form onSubmit={handleResetPassword}>
+                                <div className="mb-4">
+                                    <input
+                                        type="password"
+                                        placeholder="New Password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        required
+                                        aria-label="New Password"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                                >
+                                    Reset Password
+                                </button>
+                            </form>
+                        )}
+                    </>
                 )}
             </div>
             <Toaster position="top-center" />
@@ -287,7 +358,7 @@ const OtpInput = ({ otp, setOtp }) => {
     };
 
     return (
-        <>
+        <div className="flex justify-center space-x-2 mb-4">
             {otp.map((value, index) => (
                 <input
                     key={index}
@@ -304,7 +375,7 @@ const OtpInput = ({ otp, setOtp }) => {
                     className="w-12 h-12 mx-1 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
                 />
             ))}
-        </>
+        </div>
     );
 };
 

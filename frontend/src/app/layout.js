@@ -1,7 +1,7 @@
 "use client"
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { Store, persistor } from "@/Store";
+import { Store,persistor } from "../Store";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Protect from "./others/protected_routes";
 

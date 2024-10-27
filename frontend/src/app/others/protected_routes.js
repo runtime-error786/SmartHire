@@ -77,11 +77,13 @@ const Protect = ({ children }) => {
         if (
             router=="/Users/Home" ||
             router=="/Users/SignIn" ||
-            router=="/Users/SignUp" 
+            router=="/Users/SignUp" ||
+            router=="/home"
+
         ) {
             return <>{children}</>;
         } else {
-            route.push("/Users/SignIn");
+            route.push("/home");
             return null;
         }
     } 

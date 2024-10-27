@@ -10,12 +10,13 @@ import {
   faUser,
   faRightLeft,
   faSignOutAlt,
-  faSignInAlt
+  faSignInAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import "../../globals.css";
 import { Role_Action } from "@/Redux/Action";
+
 import { ProfileLink } from "./profile";
 import { SearchBar } from "./search";
 import bgImage from "../../Photos/bg.png";
@@ -32,25 +33,25 @@ const Navbar = () => {
     router.push("/Users/SignIn");
   };
 
-  const switchToRecruiter = async() => {
-    await dispatch(Role_Action('Recruiter'));
-    router.push('/Users/Home');
+  const switchToRecruiter = async () => {
+    await dispatch(Role_Action("Recruiter"));
+    router.push("/Users/Home");
   };
 
-  const switchToCandidate = async() => {
-    await dispatch(Role_Action('Candidate'));
-    router.push('/Users/Home');
+  const switchToCandidate = async () => {
+    await dispatch(Role_Action("Candidate"));
+    router.push("/Users/Home");
   };
 
   return (
-    <nav className="bg-gray-800 shadow-lg fixed top-0 w-full z-50">
+    <nav className="bg-[#FFFFFF] shadow-md fixed top-0 w-full z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-4">
+        <div className="flex justify-between items-center h-14">
+          <div className="flex items-center space-x-3">
             <img
               src={bgImage.src}
               alt="Logo"
-              className="h-9 w-9 md:h-12 md:w-12"
+              className="h-8 w-8 rounded-full"
             />
             <SearchBar />
           </div>
@@ -58,10 +59,10 @@ const Navbar = () => {
           <div className="md:hidden">
             <button
               onClick={toggleMenu}
-              className="text-gray-300 hover:text-white focus:outline-none transition duration-300"
+              className="text-gray-700 hover:text-black focus:outline-none transition duration-300"
               aria-label="Toggle Menu"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -72,7 +73,7 @@ const Navbar = () => {
             </button>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             {userRole === "Guest" ? (
               <>
                 <NavbarLink
@@ -141,7 +142,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      <div className={`md:hidden ${isOpen ? "block" : "hidden"} bg-gray-800 shadow-lg`}>
+      <div className={`md:hidden ${isOpen ? "block" : "hidden"} bg-[#F4F2EE] shadow-md`}>
         <div className="flex flex-col items-start space-y-2 px-4 py-3">
           {userRole === "Guest" ? (
             <>
@@ -207,40 +208,39 @@ const Navbar = () => {
 
               <div className="flex flex-col space-y-2 mt-4">
                 <button
-                  className="flex items-center space-x-2 w-full text-gray-300 hover:text-white px-4 py-2 transition duration-200 rounded-lg hover:bg-gray-700"
+                  className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
                   onClick={() => router.push("/Users/Profile")}
                 >
-                  <FontAwesomeIcon icon={faUser} />
+                  <FontAwesomeIcon icon={faUser} className="h-4 w-4" />
                   <span>View Profile</span>
                 </button>
 
                 {userRole === "Candidate" ? (
                   <button
-                    className="flex items-center space-x-2 w-full text-gray-300 hover:text-white px-4 py-2 transition duration-200 rounded-lg hover:bg-gray-700"
+                    className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
                     onClick={switchToRecruiter}
                   >
-                    <FontAwesomeIcon icon={faRightLeft} />
+                    <FontAwesomeIcon icon={faRightLeft} className="h-4 w-4" />
                     <span>Switch to Recruiter</span>
                   </button>
                 ) : (
                   <button
-                    className="flex items-center space-x-2 w-full text-gray-300 hover:text-white px-4 py-2 transition duration-200 rounded-lg hover:bg-gray-700"
+                    className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
                     onClick={switchToCandidate}
                   >
-                    <FontAwesomeIcon icon={faRightLeft} />
+                    <FontAwesomeIcon icon={faRightLeft} className="h-4 w-4" />
                     <span>Switch to Candidate</span>
                   </button>
                 )}
-                <hr className="my-1 border-gray-700" />
+                <hr className="my-1 border-gray-300" />
                 <button
-                  className="flex items-center space-x-2 w-full text-gray-300 hover:bg-red-600 hover:text-white px-4 py-2 transition duration-200 rounded-lg"
+                  className="flex items-center space-x-2 w-full text-gray-700 hover:bg-red-500 hover:text-white px-3 py-2 transition duration-200 rounded-lg"
                   onClick={() => router.push("/logout")}
                 >
-                  <FontAwesomeIcon icon={faSignOutAlt} />
+                  <FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4" />
                   <span>Logout</span>
                 </button>
               </div>
-
             </>
           ) : null}
         </div>
@@ -249,27 +249,24 @@ const Navbar = () => {
   );
 };
 
-
-
 const NavbarLink = ({ icon, label, path, router }) => (
   <button
-    className="flex flex-col items-center text-gray-300 hover:text-white transition duration-300 p-2 rounded-lg hover:bg-gray-700"
+    className="flex flex-col items-center text-gray-700 hover:text-black transition duration-300 p-1 rounded-lg hover:bg-gray-200"
     onClick={() => router.push(path)}
   >
-    <FontAwesomeIcon icon={icon} className="h-6 w-6" />
-    <span className="text-sm">{label}</span>
+    <FontAwesomeIcon icon={icon} className="h-5 w-5" />
+    <span className="text-xs font-medium">{label}</span>
   </button>
 );
 
 const NavbarLinkMobile = ({ icon, label, path, router }) => (
   <button
-    className="flex items-center space-x-2 w-full text-left text-gray-300 hover:text-white px-4 py-2 transition duration-200 rounded-lg hover:bg-gray-700"
+    className="flex items-center space-x-2 w-full text-left text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
     onClick={() => router.push(path)}
   >
-    <FontAwesomeIcon icon={icon} className="h-5 w-5" />
+    <FontAwesomeIcon icon={icon} className="h-4 w-4" />
     <span>{label}</span>
   </button>
 );
-
 
 export default Navbar;

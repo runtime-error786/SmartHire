@@ -1,13 +1,14 @@
 import random
 import string
+import time
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-from .models import User, Profile, Candidate  # Import the Profile and Candidate model
+from .models import User, Profile, Candidate
 
-otp_storage = {}
+otp_storage = {}  # Store email as key and {'otp': OTP, 'timestamp': time_created} as value
 
 def generate_otp(length=6):
     """Generate a random OTP of given length."""
@@ -21,11 +22,14 @@ def send_otp(request):
         return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
     otp = generate_otp()
-    otp_storage[email] = otp  
+    otp_storage[email] = {
+        'otp': otp,
+        'timestamp': time.time()  # Store the current time when OTP is generated
+    }
 
     send_mail(
         'Your OTP Code',
-        f'Your OTP code is {otp}. It is valid for 5 minutes.',
+        f'Your OTP code is {otp}. It is valid for 60 seconds.',
         settings.EMAIL_HOST_USER,
         [email],
         fail_silently=False,
@@ -38,14 +42,28 @@ def verify_otp(request):
     email = request.data.get('email')
     otp = request.data.get('otp')
 
-    if otp_storage.get(email) == otp:
-        del otp_storage[email] 
-        return Response({'message': 'OTP verified successfully.'})
-    else:
-        return Response({'message': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+    # Check if OTP exists for the email
+    if email in otp_storage:
+        stored_otp_data = otp_storage[email]
+        stored_otp = stored_otp_data['otp']
+        otp_age = time.time() - stored_otp_data['timestamp']  # Calculate OTP age in seconds
+
+        # Verify OTP and check if it’s expired (more than 60 seconds old)
+        if otp_age <= 60:
+            if stored_otp == otp:
+                del otp_storage[email]  # Delete OTP after successful verification
+                return Response({'message': 'OTP verified successfully.'})
+            else:
+                return Response({'message': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            del otp_storage[email]  # Delete expired OTP
+            return Response({'message': 'OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'message': 'OTP not found. Please request a new OTP.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def signup(request):
+    print(request.data)
     """Handle user signup after OTP verification."""
     email = request.data.get('email')
     password = request.data.get('password')
