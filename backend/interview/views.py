@@ -5,13 +5,21 @@ from getUserData.JWT import CustomJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import logging
 from langchain.prompts import PromptTemplate
-from langchain_community.llms import Ollama
+from langchain_groq import ChatGroq
+from langchain.schema import AIMessage, HumanMessage
+import time
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Initialize the Ollama LLM with the DeepSeek model
-llm = Ollama(model="llama3")
+# API keys for ChatGroq
+API_KEYS = [
+    "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",
+    "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"
+]
+
+# Initialize ChatGroq instances
+llm_instances = [ChatGroq(model="llama-3.3-70b-versatile", api_key=key) for key in API_KEYS]
 
 # Define a prompt template ensuring uniqueness
 prompt_template = PromptTemplate(
@@ -20,10 +28,22 @@ prompt_template = PromptTemplate(
         "Generate a {difficulty} theoretical interview question about {topic}. "
         "The question should test the candidate's theoretical knowledge of {topic}, "
         "and should not be similar to any of these past questions: {past_questions}. "
-        "Please avoid asking coding or problem-solving questions."
-        "only return question not any other information about question"
+        "Please avoid asking coding or problem-solving questions. "
+        "Only return the question, not any other information about the question."
     )
 )
+
+
+def invoke_with_fallback(prompt):
+    """Try invoking ChatGroq with each API key until one succeeds."""
+    for llm in llm_instances:
+        try:
+            response = llm.invoke([HumanMessage(content=prompt)])
+            return response.content.strip()
+        except Exception as e:
+            logger.error(f"ChatGroq request failed: {str(e)}")
+            time.sleep(60)  # Wait to avoid exceeding rate limit
+    raise Exception("All ChatGroq API instances failed due to rate limiting or other errors.")
 
 
 @api_view(['GET'])
@@ -31,7 +51,7 @@ prompt_template = PromptTemplate(
 @permission_classes([IsAuthenticated])
 def get_interview_questions(request):
     """
-    API endpoint to generate an interview question dynamically using LangChain and Ollama.
+    API endpoint to generate an interview question dynamically using LangChain and ChatGroq.
     
     Query Parameters:
     - topic: The topic for the question (default: 'general').
@@ -43,9 +63,7 @@ def get_interview_questions(request):
         topic = request.query_params.get('topic', 'Web development')
         difficulty = request.query_params.get('difficulty', 'medium')
         past_questions = request.query_params.get('past_questions', '')
-        print(topic)
-        print(difficulty)
-        print(past_questions)
+
         # Validate difficulty level
         if difficulty not in ['easy', 'medium', 'hard']:
             return Response(
@@ -59,12 +77,12 @@ def get_interview_questions(request):
 
         # Generate a new unique question
         prompt = prompt_template.format(topic=topic, difficulty=difficulty, past_questions=past_questions_str)
-        generated_question = llm.invoke(prompt).strip()
+        generated_question = invoke_with_fallback(prompt)
 
         # Log the generated question
         logger.info(f"Generated question: {generated_question}")
 
-        # Return the new question (without storing it globally)
+        # Return the new question
         return Response({'question': generated_question}, status=status.HTTP_200_OK)
 
     except Exception as e:

@@ -122,7 +122,7 @@ const Technical = ({ totalScore, maxScore, questionNO, topic }) => {
           )}
           <button
             onClick={() => window.location.reload()} // Reload the page to restart the test
-            className="mt-6 px-6 py-3 bg-[#0073b1] text-white rounded-full shadow-md hover:bg-blue-700 transition-colors duration-300"
+            className="mt-6 px-6 py-3 bg-[#0073b1] text-white rounded-full shadow-md  transition-colors duration-300"
           >
             Restart Test
           </button>
@@ -185,7 +185,7 @@ const Technical = ({ totalScore, maxScore, questionNO, topic }) => {
                 disabled={!code || isSubmitting}
                 className={`px-6 py-3 rounded-full shadow-md transition-colors duration-300 ${
                   code && !isSubmitting
-                    ? "bg-[#0073b1] text-white hover:bg-blue-700"
+                    ? "bg-[#0073b1] text-white "
                     : "bg-gray-400 text-gray-200 cursor-not-allowed"
                 }`}
               >

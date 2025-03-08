@@ -5,15 +5,22 @@ from getUserData.JWT import CustomJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import logging
 from langchain.prompts import PromptTemplate
-from langchain_community.llms import Ollama
+from langchain_groq import ChatGroq
 from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
+import time
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Initialize the Ollama LLM with the Dewpseek model
-llm = Ollama(model="llama3")
+# API keys for ChatGroq
+API_KEYS = [
+    "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",
+    "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"
+]
+
+# Initialize ChatGroq instances
+llm_instances = [ChatGroq(model="llama-3.3-70b-versatile", api_key=key) for key in API_KEYS]
 
 # Define expected JSON response format
 class AnswerEvaluation(BaseModel):
@@ -31,11 +38,19 @@ prompt_template = PromptTemplate(
     )
 )
 
-
-
-
 # JSON parser
 parser = JsonOutputParser(pydantic_object=AnswerEvaluation)
+
+def invoke_with_fallback(prompt):
+    """Try invoking ChatGroq with each API key until one succeeds."""
+    for llm in llm_instances:
+        try:
+            response = llm.invoke(prompt)
+            return response.content.strip()
+        except Exception as e:
+            logger.error(f"ChatGroq request failed: {str(e)}")
+            time.sleep(60)  # Wait to avoid exceeding rate limit
+    raise Exception("All ChatGroq API instances failed due to rate limiting or other errors.")
 
 @api_view(['POST'])
 @authentication_classes([CustomJWTAuthentication])
@@ -57,7 +72,7 @@ def check_answer(request):
         data = request.data
         question = data.get("question", "").strip()
         answer = data.get("answer", "").strip()
-        print(answer)
+        
         if not question or not answer:
             return Response({'error': 'Both question and answer are required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -65,18 +80,16 @@ def check_answer(request):
         prompt = prompt_template.format(question=question, answer=answer)
         
         # Invoke model to get evaluation
-        response = llm.invoke(prompt)
-        print(response)
-        # Print the response for debugging
-        logger.debug(f"Model Response: {response}")  # Print the response from the model
+        response = invoke_with_fallback(prompt)
+        
+        # Log the response
+        logger.debug(f"Model Response: {response}")
         
         # Parse response into structured JSON
         result = parser.parse(response)
-        print(result)
-        # Print the parsed result for debugging
-        logger.debug(f"Parsed Result: {result}")  # Print the parsed result
-
-        # Return the response directly without calling .dict()
+        
+        logger.debug(f"Parsed Result: {result}")
+        
         return Response(result, status=status.HTTP_200_OK)
     
     except Exception as e:

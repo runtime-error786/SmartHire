@@ -5,17 +5,23 @@ from getUserData.JWT import CustomJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 import logging
 from langchain.prompts import PromptTemplate
-from langchain_community.llms import Ollama
-from langchain_core.output_parsers import JsonOutputParser
-from pydantic import BaseModel, Field
+from langchain_groq import ChatGroq
 import json
-import re  # For extracting JSON using regex
+import re
+import time
+from pydantic import BaseModel, Field
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Initialize the Ollama LLM with the Dewpseek model
-llm = Ollama(model="llama3")
+# API keys for multiple ChatGroq instances
+API_KEYS = [
+    "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",
+    "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"
+]
+
+# Initialize multiple ChatGroq instances
+llm_instances = [ChatGroq(model="llama-3.3-70b-versatile", api_key=key) for key in API_KEYS]
 
 # Define expected JSON response format
 class CodeEvaluation(BaseModel):
@@ -33,12 +39,20 @@ code_prompt_template = PromptTemplate(
         "Question: {question}\n"
         "Code:\n```\n{code}\n```\n\n"
         "Return only a JSON object with 'result' and 'feedback'."
-        "Returning an error response if the input does not look like code or not match question code requirement"
+        "Returning an error response if the input does not look like code or does not match question requirements."
     )
 )
 
-# JSON parser
-parser = JsonOutputParser(pydantic_object=CodeEvaluation)
+def invoke_with_fallback(prompt):
+    """Try invoking ChatGroq with each API key until one succeeds."""
+    for llm in llm_instances:
+        try:
+            response = llm.invoke(prompt)
+            return response.content.strip()
+        except Exception as e:
+            logger.error(f"ChatGroq request failed: {str(e)}")
+            time.sleep(60)  # Wait to avoid exceeding rate limits
+    raise Exception("All ChatGroq API instances failed due to rate limiting or other errors.")
 
 @api_view(['POST'])
 @authentication_classes([CustomJWTAuthentication])
@@ -66,8 +80,8 @@ def evaluate_code(request):
         # Format prompt
         prompt = code_prompt_template.format(question=question, code=code)
 
-        # Invoke model to evaluate the code
-        response = llm.invoke(prompt)
+        # Invoke model using multiple ChatGroq instances
+        response = invoke_with_fallback(prompt)
 
         # Log raw response for debugging
         logger.debug(f"Model Response: {response}")
