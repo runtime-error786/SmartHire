@@ -81,15 +81,15 @@ const Job = ({ params }) => {
       //  const calendlyUrl = `https://calendly.com/smarthire-notreply`;
 
         // // Open the Calendly URL in a popup window
-        // const popupWindow = window.open(
-        //     calendlyUrl,
-        //     'CalendlyPopup',
-        //     'width=800,height=600,scrollbars=yes,resizable=yes,top=100,left=100'
-        // );
+        const popupWindow = window.open(
+            calendlyUrl,
+            'CalendlyPopup',
+            'width=800,height=600,scrollbars=yes,resizable=yes,top=100,left=100'
+        );
 
-        // if (!popupWindow) {
-        //     alert("Please allow popups to schedule the interview.");
-        // }
+        if (!popupWindow) {
+            alert("Please allow popups to schedule the interview.");
+        }
     };
 
 
