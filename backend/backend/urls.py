@@ -33,6 +33,10 @@ from Dashboard.views import get_dashboard_stats
 from Dashboard.views import load_users,delete_user,subscribers,delete_subscription,delete_job,load_jobs,load_reported_jobs,delete_job_and_reports,delete_report
 from report.views import create_report,check_report_status
 from savejob.views import save_job,get_saved_jobs
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5a1452d (Schedule Interview Add)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('testapi.urls')),  

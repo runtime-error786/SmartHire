@@ -152,8 +152,16 @@ def get_job_id(request, job_id):
         )
 
     try:
+<<<<<<< HEAD
         # Ensure the job exists and belongs to the current recruiter
         job = Job.objects.get(id=job_id)
+=======
+        # Ensure the job exists
+        job = Job.objects.get(id=job_id)
+
+        # Get the email of the recruiter who posted the job
+        recruiter_email = job.recruiter.profile.user.email
+>>>>>>> 5a1452d (Schedule Interview Add)
         job_data = {
             'id': job.id,  # Include the job ID in the response
             'job_name': job.job_name,
@@ -164,6 +172,10 @@ def get_job_id(request, job_id):
             'skills': job.skills,
             'interview_type': job.interview_type,
             'company_name': job.recruiter.company_name,  # Recruiter company name
+<<<<<<< HEAD
+=======
+            'recruiter_email': recruiter_email,  # Added recruiter email
+>>>>>>> 5a1452d (Schedule Interview Add)
             'created_at': job.created_at,
             'updated_at': job.updated_at,
         }

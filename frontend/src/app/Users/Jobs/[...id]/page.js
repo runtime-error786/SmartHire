@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Loader from "@/app/others/loader";
-import { FaRobot, FaUserTie, FaExclamationCircle, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaClock, FaArrowLeft, FaCheckCircle, FaFlag } from "react-icons/fa";
+import { FaRobot, FaUserTie, FaExclamationCircle, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaClock, FaArrowLeft, FaCheckCircle, FaFlag, FaFileContract, FaVoicemail, FaEnvelope } from "react-icons/fa";
 import { MdOutlineWork } from "react-icons/md";
 import { useDispatch } from 'react-redux';
 import { show_search } from "@/Redux/Action";
+import { InlineWidget } from "react-calendly";
+import { PopupWidget } from "react-calendly";
 
 const Job = ({ params }) => {
     const [job, setJob] = useState(null);
@@ -17,7 +19,6 @@ const Job = ({ params }) => {
     const [feedback, setFeedback] = useState(""); // Feedback input
     const [feedbackError, setFeedbackError] = useState(null); // Feedback validation error
     const [report, setreport] = useState("No");
-
     const dispatch = useDispatch();
     dispatch(show_search(false));
 
@@ -71,6 +72,36 @@ const Job = ({ params }) => {
         setFeedback("");
         setFeedbackError(null);
     };
+
+    const applyJob_manual = async (jobId, interviewType) => {
+        // Assuming 'job' is available in your context with recruiter_email
+        const recruiterEmail = job.recruiter_email;
+
+        // Construct the Calendly URL with both the recruiter and candidate emails
+      //  const calendlyUrl = `https://calendly.com/smarthire-notreply`;
+
+        // // Open the Calendly URL in a popup window
+        // const popupWindow = window.open(
+        //     calendlyUrl,
+        //     'CalendlyPopup',
+        //     'width=800,height=600,scrollbars=yes,resizable=yes,top=100,left=100'
+        // );
+
+        // if (!popupWindow) {
+        //     alert("Please allow popups to schedule the interview.");
+        // }
+    };
+
+
+
+    const applyJob = async (jobId, interviewType) => {
+        if (interviewType === "manual") {
+            applyJob_manual(jobId, interviewType)
+        } else if (interviewType === "ai") {
+            alert("You have successfully applied for the job AI!");
+        }
+    };
+
 
     if (loading) {
         return <Loader />;
@@ -151,7 +182,39 @@ const Job = ({ params }) => {
                             </>
                         )}
                     </div>
+
+                    <div className="flex items-center space-x-4 text-gray-700">
+                        {job.interview_type.toLowerCase() === "manual" ? (
+                            <>
+                                <FaEnvelope className="text-[#0073b1] h-6 w-6" />
+                                <p className="font-medium break-words max-w-full">
+                                    <span className="text-gray-800">{job.recruiter_email}</span>
+                                </p>
+
+                            </>
+                        ) : (
+                            <>
+
+                            </>
+                        )}
+                    </div>
                 </div>
+                {job.interview_type.toLowerCase() === "manual" ? (
+                    <>
+                        <div className="flex justify-center items-center mt-4">
+                            <p className="text-red-600 font-bold text-sm text-center bg-red-100 p-3 rounded-lg shadow-md">
+                                It is necessary to record the recruiter’s email for further steps. Please ensure to invite the recruiter’s email as a guest when you schedule interview for the job.
+                            </p>
+                        </div>
+
+                    </>
+                ) : (
+                    <>
+
+                    </>
+                )}
+
+
 
 
 
@@ -186,7 +249,7 @@ const Job = ({ params }) => {
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center sm:justify-start">
                         <button
-                            onClick={() => alert("Apply Now functionality to be implemented")}
+                            onClick={() => applyJob(job.id, job.interview_type.toLowerCase())}
                             className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 hover:bg-green-600"
                         >
                             Apply <FaCheckCircle className="ml-2 inline-block" />
@@ -206,6 +269,7 @@ const Job = ({ params }) => {
                     </div>
                 </div>
             </div>
+
 
             {/* Report Modal */}
             {showModal && (

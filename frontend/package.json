@@ -24,6 +24,10 @@
     "js-cookie": "^3.0.5",
     "next": "14.2.15",
     "react": "^18",
+<<<<<<< HEAD
+=======
+    "react-calendly": "^4.3.1",
+>>>>>>> 5a1452d (Schedule Interview Add)
     "react-chartjs-2": "^5.2.0",
     "react-countup": "^6.5.3",
     "react-dom": "^18",
@@ -36,7 +40,10 @@
     "redux-persist": "^6.0.0",
     "redux-thunk": "^3.1.0",
     "use-debounce": "^10.0.4"
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5a1452d (Schedule Interview Add)
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
