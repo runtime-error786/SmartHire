@@ -37,6 +37,7 @@ from interview.views import get_interview_questions
 from evaluation.views import check_answer
 from technical.views import get_coding_questions
 from technical_eval.views import evaluate_code
+from results.views import send_test_result_email
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('testapi.urls')),  
@@ -85,6 +86,7 @@ urlpatterns = [
     path('get_interview_questions/', get_interview_questions, name='get_interview_questions'),
     path('check_answer/', check_answer, name='check_answer'),
     path('get_coding_questions/', get_coding_questions, name='get_coding_questions'),
-    path('evaluate_code/', evaluate_code, name='evaluate_code')
-    
+    path('evaluate_code/', evaluate_code, name='evaluate_code'),
+    path('send_test_result_email/', send_test_result_email, name='send_test_result_email')
+
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

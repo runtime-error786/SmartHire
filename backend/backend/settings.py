@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'interview',
     'evaluation',
     'technical',
-    'technical_eval'
+    'technical_eval',
+    'results'
     ]
 
 MIDDLEWARE = [
@@ -158,7 +159,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER =  "sheesikram3@gmail.com"
 EMAIL_HOST_PASSWORD = "mbzv lnpy bswu bdzo"
-GROQ_API_KEY = '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'
+GROQ_API_KEY = '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'
 
 from datetime import timedelta
 

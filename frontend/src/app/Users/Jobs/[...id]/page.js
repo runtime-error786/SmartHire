@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { show_search } from "@/Redux/Action";
 import { InlineWidget } from "react-calendly";
 import { PopupWidget } from "react-calendly";
+import Theoretical from "./Theoretical";
 
 const Job = ({ params }) => {
     const [job, setJob] = useState(null);
@@ -19,6 +20,8 @@ const Job = ({ params }) => {
     const [feedback, setFeedback] = useState(""); // Feedback input
     const [feedbackError, setFeedbackError] = useState(null); // Feedback validation error
     const [report, setreport] = useState("No");
+    const [concat, setconcat] = useState("");
+    const [theo, settheo] = useState(false);
     const dispatch = useDispatch();
     dispatch(show_search(false));
 
@@ -38,6 +41,7 @@ const Job = ({ params }) => {
         };
 
         fetchJobDetails();
+        settheo(false)
     }, [params.id]);
 
     const reportJob = async (jobId) => {
@@ -98,7 +102,8 @@ const Job = ({ params }) => {
         if (interviewType === "manual") {
             applyJob_manual(jobId, interviewType)
         } else if (interviewType === "ai") {
-            alert("You have successfully applied for the job AI!");
+            setconcat(`Job Tile : ${job.job_name}(domain : ${job.skills})`);
+            settheo(true)
         }
     };
 
@@ -116,7 +121,11 @@ const Job = ({ params }) => {
     }
 
     return (
-        <div className="min-h-screen py-8 mt-12 bg-gray-50" style={{ backgroundColor: "#F4F2EE" }}>
+        
+            theo==false ? (
+
+                <>
+                <div className="min-h-screen py-8 mt-12 bg-gray-50" style={{ backgroundColor: "#F4F2EE" }}>
             <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 sm:p-8 border border-gray-200">
                 <h1 className="text-4xl font-extrabold text-[#0073b1] mb-6 ">{job.job_name}</h1>
 
@@ -304,6 +313,14 @@ const Job = ({ params }) => {
                 </div>
             )}
         </div>
+                </>
+            ) :(
+                <>
+                <Theoretical topic={concat} email={job.recruiter_email}/>
+                </>
+            )
+        
+        
     );
 };
 

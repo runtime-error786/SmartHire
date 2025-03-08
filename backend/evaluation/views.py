@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 # API keys for ChatGroq
 API_KEYS = [
-    "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",
-    "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"
+    "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",
+    "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"
 ]
 
 # Initialize ChatGroq instances
-llm_instances = [ChatGroq(model="llama-3.3-70b-versatile", api_key=key) for key in API_KEYS]
+llm_instances = [ChatGroq(model="llama-3.3-70b-specdec", api_key=key) for key in API_KEYS]
 
 # Define expected JSON response format
 class AnswerEvaluation(BaseModel):
