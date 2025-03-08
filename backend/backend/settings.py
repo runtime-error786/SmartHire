@@ -55,12 +55,12 @@ INSTALLED_APPS = [
     'checkout',
     'Up_del_ret_job',
     'report',
-    'savejob'
-<<<<<<< HEAD
-]
-=======
+    'savejob',
+    'interview',
+    'evaluation',
+    'technical',
+    'technical_eval'
     ]
->>>>>>> 5a1452d (Schedule Interview Add)
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

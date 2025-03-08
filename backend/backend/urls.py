@@ -33,10 +33,10 @@ from Dashboard.views import get_dashboard_stats
 from Dashboard.views import load_users,delete_user,subscribers,delete_subscription,delete_job,load_jobs,load_reported_jobs,delete_job_and_reports,delete_report
 from report.views import create_report,check_report_status
 from savejob.views import save_job,get_saved_jobs
-<<<<<<< HEAD
-=======
-
->>>>>>> 5a1452d (Schedule Interview Add)
+from interview.views import get_interview_questions
+from evaluation.views import check_answer
+from technical.views import get_coding_questions
+from technical_eval.views import evaluate_code
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('testapi.urls')),  
@@ -82,5 +82,9 @@ urlpatterns = [
     path('check_report_status/<int:job_id>/', check_report_status, name='check_report_status'),
     path('save_job/', save_job, name='save_job'),
     path('get_save_job/', get_saved_jobs, name='get_saved_jobs'),
-
+    path('get_interview_questions/', get_interview_questions, name='get_interview_questions'),
+    path('check_answer/', check_answer, name='check_answer'),
+    path('get_coding_questions/', get_coding_questions, name='get_coding_questions'),
+    path('evaluate_code/', evaluate_code, name='evaluate_code')
+    
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
