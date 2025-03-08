@@ -15,8 +15,10 @@ logger = logging.getLogger(__name__)
 
 # API keys for ChatGroq
 API_KEYS = [
-    "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",
-    "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"
+    "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",
+    "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",
+    "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",
+    "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"
 ]
 
 # Initialize ChatGroq instances
