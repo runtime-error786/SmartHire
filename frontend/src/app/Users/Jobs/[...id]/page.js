@@ -78,7 +78,7 @@ const Job = ({ params }) => {
         const recruiterEmail = job.recruiter_email;
 
         // Construct the Calendly URL with both the recruiter and candidate emails
-      //  const calendlyUrl = `https://calendly.com/smarthire-notreply`;
+       const calendlyUrl = `https://calendly.com/smarthire-notreply`;
 
         // // Open the Calendly URL in a popup window
         const popupWindow = window.open(
